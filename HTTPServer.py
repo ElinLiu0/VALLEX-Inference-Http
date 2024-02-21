@@ -21,7 +21,7 @@ print("Preloading models...")
 preload_models()
 # Starting Cache Servers
 print("Starting Cache Servers...")
-subprocess.Popen(["php","-S","localhost:8080","-t","./cache"],shell=False)
+subprocess.Popen(["php","-S","0.0.0.0:8080","-t","./cache"],shell=False)
 app = FastAPI()
 # CORS
 print("Setting up CORS...")
@@ -63,7 +63,7 @@ async def generateAudio(request:RequestBody):
                 torch.cuda.empty_cache() # 清空所有的GPU缓存
             except Exception as e:
                 return json.dumps({"error":str(e),"code":"500"})
-    return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
+    return json.dumps({"audioURL":f"http://0.0.0.0:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
 if __name__ == "__main__":
     print("Starting server...")
     uvicorn.run(app,host="localhost",port=8000)
