@@ -8,6 +8,14 @@ from scipy.io.wavfile import write as write_wav
 import pathlib
 import subprocess
 from macros import lang2accent
+import torch
+import os
+
+
+# 如果允许的话，可以解除以下代码的注释
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0" # 如果有多个GPUs时，可以使用逗号分隔GPU ID
+
+
 # Preload models
 print("Preloading models...")
 preload_models()
@@ -31,22 +39,29 @@ class RequestBody(BaseModel):
     language:str
 print("Setting up routes...")
 @app.post("/generate")
-def generateAudio(request:RequestBody):
+async def generateAudio(request:RequestBody):
     textPrompt = request.textPrompt
     character = request.character
     language = request.language
+    if not pathlib.Path(f"./presets/{character}.npz").exists():
+        return json.dumps({"error":"Character not found","code":"404"})
     if not pathlib.Path(f"./cache/{language}/{character}").exists():
         pathlib.Path(f"./cache/{language}/{character}").mkdir(parents=True,exist_ok=True)
     if pathlib.Path(f"./cache/{language}/{textPrompt}.wav").exists():
-        pass
+        return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
     else:
         if "AOE" in textPrompt and language == "ja":
             textPrompt = "範囲傷害です"
         else:
-            audio_array = generate_audio(textPrompt, prompt=character,language=language,accent=lang2accent[language])
-            # Saving a cache
-            write_wav(f"./cache/{language}/{character}/{textPrompt}.wav",SAMPLE_RATE,audio_array)
-    return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav"})
+            try:
+                audio_array = generate_audio(textPrompt, prompt=character,language=language,accent=lang2accent[language])
+                # Saving a cache
+                write_wav(f"./cache/{language}/{character}/{textPrompt}.wav",SAMPLE_RATE,audio_array)
+                torch.cuda.synchronize() # 同步所有的GPU Stream
+                torch.cuda.empty_cache() # 清空所有的GPU缓存
+            except Exception as e:
+                return json.dumps({"error":"Unhandled error occured on server,for more to checkout reason key","code":"500","reason":str(e)})
+    return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
 if __name__ == "__main__":
     print("Starting server...")
     uvicorn.run(app,host="localhost",port=8000)
