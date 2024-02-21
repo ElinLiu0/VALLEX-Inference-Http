@@ -62,7 +62,7 @@ async def generateAudio(request:RequestBody):
                 torch.cuda.synchronize() # 同步所有的GPU Stream
                 torch.cuda.empty_cache() # 清空所有的GPU缓存
             except Exception as e:
-                return json.dumps({"error":"Unhandled error occured on server,for more to checkout reason key","code":"500","reason":str(e)})
+                return json.dumps({"error":str(e),"code":"500"})
     return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
 if __name__ == "__main__":
     print("Starting server...")
