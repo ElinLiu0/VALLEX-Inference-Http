@@ -21,7 +21,7 @@ print("Preloading models...")
 preload_models()
 # Starting Cache Servers
 print("Starting Cache Servers...")
-subprocess.Popen(["php","-S","0.0.0.0:8080","-t","./cache"],shell=False)
+subprocess.Popen(["php","-S","localhost:8080","-t","./cache"],shell=False)
 app = FastAPI()
 # CORS
 print("Setting up CORS...")
@@ -45,12 +45,14 @@ async def generateAudio(request:RequestBody):
     character = request.character
     language = request.language
     noaccent = request.noaccent
+    if language not in lang2accent.keys():
+        return {"error":"Language not support","code":"404"}
     if not pathlib.Path(f"./presets/{character}.npz").exists():
-        return json.dumps({"error":"Character not found","code":"404"})
+        return {"error":"Character not found","code":"404"}
     if not pathlib.Path(f"./cache/{language}/{character}").exists():
         pathlib.Path(f"./cache/{language}/{character}").mkdir(parents=True,exist_ok=True)
     if pathlib.Path(f"./cache/{language}/{textPrompt}.wav").exists():
-        return json.dumps({"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
+        return {"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"}
     else:
         if "AOE" in textPrompt and language == "ja":
             textPrompt = "範囲傷害です"
@@ -62,9 +64,9 @@ async def generateAudio(request:RequestBody):
                 torch.cuda.synchronize() # 同步所有的GPU Stream
                 torch.cuda.empty_cache() # 清空所有的GPU缓存
             except Exception as e:
-                return json.dumps({"error":str(e),"code":"500"})
-    return json.dumps({"audioURL":f"http://0.0.0.0:8080/{language}/{character}/{textPrompt}.wav","code":"200"})
+                return {"error":str(e),"code":"500"}
+    return {"audioURL":f"http://localhost:8080/{language}/{character}/{textPrompt}.wav","code":"200"}
 if __name__ == "__main__":
     print("Starting server...")
-    uvicorn.run(app,host="0.0.0.0",port=8000)
+    uvicorn.run(app,host="localhost",port=8000)
 
