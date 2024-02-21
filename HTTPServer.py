@@ -37,12 +37,14 @@ class RequestBody(BaseModel):
     textPrompt:str
     character:str
     language:str
+    noaccent:bool
 print("Setting up routes...")
 @app.post("/generate")
 async def generateAudio(request:RequestBody):
     textPrompt = request.textPrompt
     character = request.character
     language = request.language
+    noaccent = request.noaccent
     if not pathlib.Path(f"./presets/{character}.npz").exists():
         return json.dumps({"error":"Character not found","code":"404"})
     if not pathlib.Path(f"./cache/{language}/{character}").exists():
@@ -54,7 +56,7 @@ async def generateAudio(request:RequestBody):
             textPrompt = "範囲傷害です"
         else:
             try:
-                audio_array = generate_audio(textPrompt, prompt=character,language=language,accent=lang2accent[language])
+                audio_array = generate_audio(textPrompt, prompt=character,language=language,accent=lang2accent[language] if noaccent == False else "no-accent")
                 # Saving a cache
                 write_wav(f"./cache/{language}/{character}/{textPrompt}.wav",SAMPLE_RATE,audio_array)
                 torch.cuda.synchronize() # 同步所有的GPU Stream
