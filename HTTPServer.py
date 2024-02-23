@@ -54,7 +54,7 @@ async def generateAudio(request:RequestBody):
         return {"error":"Character not found","code":"404"}
     if not pathlib.Path(f"./cache/{language}/{character}/{executionMode}").exists():
         pathlib.Path(f"./cache/{language}/{character}/{executionMode}").mkdir(parents=True,exist_ok=True)
-    if pathlib.Path(f"./cache/{language}/{textPrompt}.wav").exists():
+    if pathlib.Path(f"./cache/{language}/{character}/{textPrompt}.wav").exists():
         return {"audioURL":f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav","code":"200"}
     else:
         if "AOE" in textPrompt and language == "ja":
@@ -66,7 +66,7 @@ async def generateAudio(request:RequestBody):
                 else:
                     audio_array = generate_audio(textPrompt, prompt=character,language=language,accent=lang2accent[language] if noaccent == False else "no-accent")
                 # Saving a cache
-                write_wav(f"./cache/{language}/{character}/{executionMode}/{textPrompt}.wav",SAMPLE_RATE,audio_array)
+                write_wav(f"./cache/{language}/{character}/{executionMode}/{character}/{textPrompt}.wav",SAMPLE_RATE,audio_array)
                 torch.cuda.synchronize() # 同步所有的GPU Stream
                 torch.cuda.empty_cache() # 清空所有的GPU缓存
             except Exception as e:
