@@ -54,13 +54,13 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
     longpromptMode = request.longprompt
     executionMode = "long" if longpromptMode else "short"
     if language not in lang2accent.keys():
-        return ResponseBody(error="Language not supported",code=404)
+        return ResponseBody(error="Language not supported",code=40, audioURL=None)
     if not pathlib.Path(f"./presets/{character}.npz").exists():
-        return ResponseBody(error="Character not found",code=404)
+        return ResponseBody(error="Character not found",code=404, audioURL=None)
     if not pathlib.Path(f"./cache/{language}/{character}/{executionMode}").exists():
         pathlib.Path(f"./cache/{language}/{character}/{executionMode}").mkdir(parents=True,exist_ok=True)
     if pathlib.Path(f"./cache/{language}/{character}/{executionMode}/{textPrompt}.wav").exists():
-        return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200)
+        return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
     else:
         try:
             if longpromptMode:
@@ -73,7 +73,7 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
             torch.cuda.empty_cache() # 清空所有的GPU缓存
         except Exception as e:
             return ResponseBody(error=str(e),code=500)
-    return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200)
+    return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
 if __name__ == "__main__":
     print("Starting server...")
     uvicorn.run(app,host="localhost",port=8000)
