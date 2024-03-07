@@ -10,6 +10,7 @@ import subprocess
 from macros import lang2accent
 import torch
 import os
+from ShiftedTimeStampValidator import StaticShiftingTimeStampValidation
 
 os.environ['CURL_CA_BUNDLE'] = ''
 # 如果允许的话，可以解除以下代码的注释
@@ -53,6 +54,10 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
     noaccent = request.noaccent
     longpromptMode = request.longprompt
     executionMode = "long" if longpromptMode else "short"
+    postStrTime = request.posttime
+    allowedShiftedTime = 60
+    if not StaticShiftingTimeStampValidation(allowedShiftedTime, postStrTime):
+        return ResponseBody(error="Invalid Request",code=403, audioURL=None)
     if language not in lang2accent.keys():
         return ResponseBody(error="Language not supported",code=40, audioURL=None)
     if not pathlib.Path(f"./presets/{character}.npz").exists():
