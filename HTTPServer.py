@@ -23,7 +23,7 @@ print("Preloading models...")
 preload_models()
 # Starting Cache Servers
 print("Starting Cache Servers...")
-subprocess.Popen(["php","-S","localhost:8080","-t","./cache"],shell=False)
+subprocess.Popen(["php","-S","127.0.0.1:8080","-t","./cache"],shell=False)
 app = FastAPI()
 # CORS
 print("Setting up CORS...")
@@ -57,7 +57,7 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
     longpromptMode = request.longprompt
     executionMode = "long" if longpromptMode else "short"
     # postStrTime = request.posttime
-    allowedShiftedTime = 60
+    # allowedShiftedTime = 60
     # if not StaticShiftingTimeStampValidation(allowedShiftedTime, postStrTime):
     #     return ResponseBody(error="Invalid Request",code=403, audioURL=None)
     if language not in lang2accent.keys():
@@ -80,8 +80,8 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
             torch.cuda.empty_cache() # 清空所有的GPU缓存
         except Exception as e:
             return ResponseBody(error=str(e),code=500)
-    return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
+    return ResponseBody(audioURL=f"http://127.0.0.1:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
 if __name__ == "__main__":
     print("Starting server...")
-    uvicorn.run(app,host="localhost",port=8000)
+    uvicorn.run(app,host="127.0.0.1",port=8000)
 
