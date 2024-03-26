@@ -11,6 +11,7 @@ from macros import lang2accent
 import torch
 import os
 from ShiftedTimeStampValidator import StaticShiftingTimeStampValidation
+import logging
 
 os.environ['CURL_CA_BUNDLE'] = ''
 # 如果允许的话，可以解除以下代码的注释
@@ -48,16 +49,17 @@ class ResponseBody(BaseModel):
 print("Setting up routes...")
 @app.post("/generate")
 async def generateAudio(request:RequestBody) -> ResponseBody:
+    print(request)
     textPrompt = request.textPrompt
     character = request.character
     language = request.language
     noaccent = request.noaccent
     longpromptMode = request.longprompt
     executionMode = "long" if longpromptMode else "short"
-    postStrTime = request.posttime
+    # postStrTime = request.posttime
     allowedShiftedTime = 60
-    if not StaticShiftingTimeStampValidation(allowedShiftedTime, postStrTime):
-        return ResponseBody(error="Invalid Request",code=403, audioURL=None)
+    # if not StaticShiftingTimeStampValidation(allowedShiftedTime, postStrTime):
+    #     return ResponseBody(error="Invalid Request",code=403, audioURL=None)
     if language not in lang2accent.keys():
         return ResponseBody(error="Language not supported",code=40, audioURL=None)
     if not pathlib.Path(f"./presets/{character}.npz").exists():
@@ -65,7 +67,7 @@ async def generateAudio(request:RequestBody) -> ResponseBody:
     if not pathlib.Path(f"./cache/{language}/{character}/{executionMode}").exists():
         pathlib.Path(f"./cache/{language}/{character}/{executionMode}").mkdir(parents=True,exist_ok=True)
     if pathlib.Path(f"./cache/{language}/{character}/{executionMode}/{textPrompt}.wav").exists():
-        return ResponseBody(audioURL=f"http://localhost:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
+        return ResponseBody(audioURL=f"http://127.0.0.1:8080/{language}/{character}/{executionMode}/{textPrompt}.wav",code=200,error=None)
     else:
         try:
             if longpromptMode:
